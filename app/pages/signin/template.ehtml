@@ -1,0 +1,98 @@
+import "./style.css";
+import { redirect } from "@elements/app";
+import favicon from "#app/shared/assets/favicons/favicon.svg";
+import { Layout } from "#app/shared/templates/layout";
+import { signin } from "#app/shared/services/auth";
+
+interface SigninForm {
+  email: string;
+  password: string;
+  error: string;
+}
+
+interface DemoLogin {
+  id: string;
+  name: string;
+  show: string;
+  email: string;
+  password: string;
+}
+
+// Seeded by the development migration, so anyone trying the app can sign in.
+const DEMO_LOGINS: DemoLogin[] = [
+  { id: "maya", name: "Maya Okafor", show: "The Slow Kitchen", email: "maya@episodeloom.dev", password: "podcast123" },
+  { id: "theo", name: "Theo Lindqvist", show: "Signal & Noise", email: "theo@episodeloom.dev", password: "podcast123" },
+];
+
+function onSubmit(form: SigninForm) {
+  try {
+    signin(form.email, form.password);
+    form.error = "";
+    redirect("/dashboard");
+  } catch (err: any) {
+    form.error = err.message;
+  }
+}
+
+function onUseDemo(form: SigninForm, login: DemoLogin) {
+  form.email = login.email;
+  form.password = login.password;
+  onSubmit(form);
+}
+
+<html lang="en" class="page-signin" (
+  private form: SigninForm = { email: "", password: "", error: "" },
+)>
+  <head>
+    <title>Sign in · episodeloom</title>
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+  </head>
+  <body>
+    <Layout>
+      <div class="stack is-xl">
+        <div class="card auth-card">
+          <div class="card-body">
+            <form class="stack" onsubmit={() => onSubmit(form)}>
+              <div class="stack is-xs">
+                <h1>Sign in</h1>
+                <p class="hint">Manage your shows, episodes and downloads.</p>
+              </div>
+
+              <p e:if={form.error} class="error" role="alert">{form.error}</p>
+
+              <div class="field">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" value={form.email}
+                       autocomplete="email" autocapitalize="none" spellcheck={false} required>
+              </div>
+
+              <div class="field">
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" value={form.password}
+                       autocomplete="current-password" required>
+              </div>
+
+              <button type="submit" class="is-primary is-block">Sign in</button>
+
+              <p class="hint">New here? <a href="/signup">Create an account</a></p>
+            </form>
+          </div>
+        </div>
+
+        <div class="stack is-sm demo-logins">
+          <div class="row demo-head">
+            <h2 class="text-sm">Try a demo podcaster</h2>
+            <span class="hint">password <code>podcast123</code></span>
+          </div>
+          <button e:for={login of DEMO_LOGINS} class="demo-login row" onclick={() => onUseDemo(form, login)}>
+            <div>
+              <strong>{login.name}</strong>
+              <span class="demo-email">{login.email}</span>
+            </div>
+            <span class="demo-show">{login.show} →</span>
+          </button>
+        </div>
+      </div>
+    </Layout>
+  </body>
+</html>

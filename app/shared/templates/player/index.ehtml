@@ -1,0 +1,81 @@
+import "./style.css";
+import { formatDuration } from "#app/shared/services/podcasts";
+
+interface PlayerState {
+  playing: boolean;
+  current: number;
+}
+
+// The audio element is the one piece of the page whose state lives in the
+// browser, so the controls reach it through the player they sit in.
+function audioFor(target: EventTarget | null): HTMLAudioElement | null {
+  return (target as HTMLElement | null)?.closest(".player")?.querySelector("audio") ?? null;
+}
+
+function onToggle(event: Event) {
+  let audio = audioFor(event.currentTarget);
+
+  if (!audio) {
+    return;
+  }
+
+  if (audio.paused) {
+    audio.play();
+  } else {
+    audio.pause();
+  }
+}
+
+function onScrub(event: Event, state: PlayerState) {
+  let audio = audioFor(event.currentTarget);
+  let value = Number((event.currentTarget as HTMLInputElement).value);
+
+  state.current = value;
+
+  if (audio) {
+    audio.currentTime = value;
+  }
+}
+
+function onTime(event: Event, state: PlayerState) {
+  state.current = (event.currentTarget as HTMLAudioElement).currentTime;
+}
+
+<Player (
+  src: string,
+  duration: number,
+  compact: boolean = false,
+  private state: PlayerState = { playing: false, current: 0 },
+)>
+  <div class={["player", compact && "is-compact"]}>
+    <audio preload="none"
+           src={src}
+           onplay={() => state.playing = true}
+           onpause={() => state.playing = false}
+           onended={() => state.playing = false}
+           ontimeupdate={(e) => onTime(e, state)}></audio>
+
+    <button class="player-toggle is-primary"
+            aria-label={state.playing ? "Pause" : "Play"}
+            onclick={(e) => onToggle(e)}>
+      <svg e:if={state.playing} width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+        <rect x="3" y="2" width="3.5" height="12" rx="1" fill="currentColor"/>
+        <rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="currentColor"/>
+      </svg>
+      <svg e:else width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M4.5 2.5v11l9-5.5z" fill="currentColor"/>
+      </svg>
+    </button>
+
+    <input class="player-scrub"
+           type="range"
+           min="0"
+           max={duration}
+           step="0.1"
+           value={state.current}
+           aria-label="Position"
+           oninput={(e) => onScrub(e, state)}>
+
+    <span class="player-time">{formatDuration(Math.floor(state.current))} / {formatDuration(duration)}</span>
+  </div>
+</Player>

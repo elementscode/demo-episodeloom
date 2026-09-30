@@ -1,0 +1,61 @@
+import "./style.css";
+import { raw } from "@elements/app";
+import favicon from "#app/shared/assets/favicons/favicon.svg";
+import { Layout } from "#app/shared/templates/layout";
+import { Player } from "#app/shared/templates/player";
+import {
+  Episode,
+  Show,
+  audioUrl,
+  coverUrl,
+  episodeUrl,
+  formatDuration,
+  notesSummary,
+  showUrl,
+} from "#app/shared/services/podcasts";
+
+function formatDate(date: Date): string {
+  return new Date(date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+}
+
+<html lang="en" class="page-episode" (
+  show: Show,
+  episode: Episode,
+  notesHtml: string,
+  previous: number,
+  next: number,
+)>
+  <head>
+    <title>{episode.title} · {show.title}</title>
+    <meta name="description" content={notesSummary(episode.notes, 160)}>
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+  </head>
+  <body>
+    <Layout width="is-form">
+      <article class="stack is-xl">
+        <a class="episode-show row" href={showUrl(show)}>
+          <img src={coverUrl(show)} alt="" width="56" height="56">
+          <div>
+            <strong>{show.title}</strong>
+            <span>by {show.author}</span>
+          </div>
+        </a>
+
+        <div class="stack is-sm">
+          <p class="eyebrow">Episode {episode.number} · {formatDate(episode.publishAt)} · {formatDuration(episode.durationSeconds)}</p>
+          <h1 class="episode-title">{episode.title}</h1>
+        </div>
+
+        <Player src={audioUrl(show, episode)} duration={episode.durationSeconds} />
+
+        <div class="prose show-notes">{raw(notesHtml)}</div>
+
+        <nav class="row episode-nav">
+          <a e:if={previous > 0} href={episodeUrl(show, { number: previous })}>← Episode {previous}</a>
+          <span e:else></span>
+          <a e:if={next !== Infinity} href={episodeUrl(show, { number: next })}>Episode {next} →</a>
+        </nav>
+      </article>
+    </Layout>
+  </body>
+</html>
