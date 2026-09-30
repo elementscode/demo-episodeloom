@@ -1,0 +1,139 @@
+.editor-head {
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.editor-head h1 {
+  margin: 0;
+}
+
+.cover-field {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: center;
+}
+
+.cover-preview {
+  display: block;
+  width: 8rem;
+  height: 8rem;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  background: var(--bg-muted);
+  border: 1px solid var(--rule);
+}
+
+.cover-empty {
+  display: grid;
+  place-items: center;
+  width: 8rem;
+  height: 8rem;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--rule-strong, var(--rule));
+  color: var(--ink-soft);
+  font-size: var(--text-xs);
+  text-align: center;
+  padding: var(--space-2);
+}
+
+.form-actions {
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.notes-input {
+  min-height: 14rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.notes-preview {
+  min-height: 14rem;
+  padding: var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+}
+
+.notes-preview > :first-child {
+  margin-top: 0;
+}
+
+.publish-options {
+  gap: var(--space-5);
+}
+
+.publish-options label {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-weight: var(--weight-normal);
+}
+
+.danger-zone {
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 40rem) {
+  .cover-field {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+@media (max-width: 40rem) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.episode-title-row {
+  grid-template-columns: minmax(0, 1fr) 9rem;
+}
+
+.danger-zone p {
+  margin: var(--space-1) 0 0;
+}
+
+@media (max-width: 40rem) {
+  .episode-title-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* A form card's body is a flex item; without this, a textarea or file input's
+   intrinsic width pushes the fields past the card on a phone. */
+form.card > .card-body {
+  min-width: 0;
+}
+
+input[type="file"] {
+  max-width: 100%;
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  background: var(--bg, #fff);
+  color: var(--ink);
+  font: inherit;
+  font-weight: var(--weight-medium, 500);
+  cursor: pointer;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: var(--bg-muted);
+}

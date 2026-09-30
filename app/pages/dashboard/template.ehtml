@@ -1,0 +1,201 @@
+import "./style.css";
+import { LiveView } from "@elements/app";
+import favicon from "#app/shared/assets/favicons/favicon.svg";
+import { Layout } from "#app/shared/templates/layout";
+import { DownloadDay, WINDOW_DAYS } from "#app/shared/services/downloads";
+import {
+  Episode,
+  Show,
+  coverUrl,
+  episodeUrl,
+  isPublished,
+  showUrl,
+} from "#app/shared/services/podcasts";
+import { DayTotal, dailyTotals, episodeTotals, lastDays, niceMax, sumLast } from "./stats";
+
+interface DashboardState {
+  showId: string;
+  hover: string;
+}
+
+interface Tile {
+  id: string;
+  label: string;
+  value: number;
+}
+
+function tiles(totals: DayTotal[], episodes: Episode[], showId: string): Tile[] {
+  let live = episodes.filter((e) => (!showId || e.showId === showId) && isPublished(e)).length;
+
+  return [
+    { id: "today", label: "Downloads today", value: totals[totals.length - 1]?.count ?? 0 },
+    { id: "week", label: "Last 7 days", value: sumLast(totals, 7) },
+    { id: "month", label: `Last ${WINDOW_DAYS} days`, value: sumLast(totals, WINDOW_DAYS) },
+    { id: "episodes", label: "Episodes published", value: live },
+  ];
+}
+
+function gridLines(max: number): { id: string; value: string }[] {
+  return [1, 0.75, 0.5, 0.25, 0].map((f) => ({ id: String(f), value: Math.round(max * f).toLocaleString() }));
+}
+
+function readout(totals: DayTotal[], hover: string): string {
+  let hit = totals.find((t) => t.day === hover);
+
+  if (hit) {
+    return `${hit.label}: ${hit.count.toLocaleString()} downloads`;
+  }
+
+  return "Hover a bar for the day's count";
+}
+
+function showEpisodes(episodes: Episode[], showId: string): Episode[] {
+  return episodes.filter((e) => e.showId === showId);
+}
+
+function visibleShows(shows: Show[], showId: string): Show[] {
+  return showId ? shows.filter((s) => s.id === showId) : shows;
+}
+
+function whenLabel(episode: Episode): string {
+  let date = new Date(episode.publishAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+  return isPublished(episode) ? `Published ${date}` : `Goes live ${date}`;
+}
+
+<html lang="en" class="page-dashboard" (
+  shows: Show[],
+  episodes: Episode[],
+  downloads: LiveView<DownloadDay>,
+  today: string,
+  private state: DashboardState = { showId: "", hover: "" },
+)>
+  <head>
+    <title>Dashboard · episodeloom</title>
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+  </head>
+  <body>
+    <Layout width="is-wide">
+      <div class="stack is-2xl">
+        <div class="row dash-head">
+          <div class="stack is-xs">
+            <p class="eyebrow">Dashboard</p>
+            <h1>Your shows</h1>
+          </div>
+          <div class="cluster">
+            <span class="pill is-success"><span class="pill-dot"></span>Live downloads</span>
+            <a class="button is-primary" href="/dashboard/shows/new">New show</a>
+          </div>
+        </div>
+
+        <div e:if={shows.length === 0} class="card empty-state">
+          <div class="stack">
+            <h2>Start your first show</h2>
+            <p class="hint">Add a title, cover art and a category. Then publish episodes and share the RSS feed.</p>
+            <div><a class="button is-primary" href="/dashboard/shows/new">Create a show</a></div>
+          </div>
+        </div>
+
+        <div e:else class="stack is-2xl">
+          <div e:if={shows.length > 1} class="tabs">
+            <div class="tab-list">
+              <button class={["tab", !state.showId && "is-active"]} onclick={() => state.showId = ""}>All shows</button>
+              <button e:for={show of shows} class={["tab", state.showId === show.id && "is-active"]} onclick={() => state.showId = show.id}>{show.title}</button>
+            </div>
+          </div>
+
+          <div class="stat-grid">
+            <div e:for={tile of tiles(dailyTotals(downloads, lastDays(today, WINDOW_DAYS), state.showId), episodes, state.showId)} class="card stat">
+              <p class="stat-label">{tile.label}</p>
+              <p class="stat-value">{tile.value.toLocaleString()}</p>
+            </div>
+          </div>
+
+          <DownloadsChart totals={dailyTotals(downloads, lastDays(today, WINDOW_DAYS), state.showId)} {state} />
+
+          <section e:for={show of visibleShows(shows, state.showId)} class="card">
+            <div class="card-head row show-panel-head">
+              <img src={coverUrl(show)} alt="" width="44" height="44">
+              <h2>{show.title}</h2>
+              <div class="cluster is-sm">
+                <a class="button is-ghost is-sm" href={showUrl(show)}>Public page</a>
+                <a class="button is-sm" href={`/dashboard/shows/${show.id}`}>Edit show</a>
+                <a class="button is-primary is-sm" href={`/dashboard/shows/${show.id}/episodes/new`}>New episode</a>
+              </div>
+            </div>
+            <div class="card-body table-scroll">
+              <EpisodeTable {show} episodes={showEpisodes(episodes, show.id)} {downloads} {today} />
+            </div>
+          </section>
+        </div>
+      </div>
+    </Layout>
+  </body>
+</html>
+
+<DownloadsChart (totals: DayTotal[], state: DashboardState)>
+  <section class="card">
+    <div class="card-body stack">
+      <div class="row chart-head">
+        <h2>Downloads per day</h2>
+        <span class="chart-readout" aria-live="polite">{readout(totals, state.hover)}</span>
+      </div>
+
+      <div class="chart" role="img" aria-label={`Daily downloads for the last ${totals.length} days`}>
+        <div class="chart-grid">
+          <span e:for={line of gridLines(niceMax(Math.max(...totals.map((t) => t.count))))} data-value={line.value}></span>
+        </div>
+        <div class="chart-bars">
+          <div e:for={t of totals}
+               class={["chart-bar", state.hover === t.day && "is-active"]}
+               title={`${t.label}: ${t.count}`}
+               onmouseenter={() => state.hover = t.day}
+               onmouseleave={() => state.hover = ""}>
+            <span style={`height: ${(t.count / niceMax(Math.max(...totals.map((x) => x.count)))) * 100}%`}></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-axis">
+        <span>{totals[0]?.label}</span>
+        <span>{totals[Math.floor(totals.length / 2)]?.label}</span>
+        <span>Today</span>
+      </div>
+    </div>
+  </section>
+</DownloadsChart>
+
+<EpisodeTable (show: Show, episodes: Episode[], downloads: LiveView<DownloadDay>, today: string)>
+  <p e:if={episodes.length === 0} class="hint">No episodes yet. Publish your first one to start your feed.</p>
+  <table e:else class="episodes-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Episode</th>
+        <th class="hide-sm">Status</th>
+        <th class="num">Today</th>
+        <th class="num hide-sm">7 days</th>
+        <th class="num hide-sm">30 days</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr e:for={episode of episodes}>
+        <td>{episode.number}</td>
+        <td>
+          <a e:if={isPublished(episode)} href={episodeUrl(show, episode)}>{episode.title}</a>
+          <span e:else>{episode.title}</span>
+          <span class="episode-when">{whenLabel(episode)}</span>
+        </td>
+        <td class="hide-sm">
+          <span e:if={isPublished(episode)} class="pill is-success">Published</span>
+          <span e:else class="pill is-info">Scheduled</span>
+        </td>
+        <td class="num">{(episodeTotals(downloads, lastDays(today, WINDOW_DAYS)).get(episode.id)?.today ?? 0).toLocaleString()}</td>
+        <td class="num hide-sm">{(episodeTotals(downloads, lastDays(today, WINDOW_DAYS)).get(episode.id)?.week ?? 0).toLocaleString()}</td>
+        <td class="num hide-sm">{(episodeTotals(downloads, lastDays(today, WINDOW_DAYS)).get(episode.id)?.month ?? 0).toLocaleString()}</td>
+        <td class="num"><a href={`/dashboard/episodes/${episode.id}`}>Edit</a></td>
+      </tr>
+    </tbody>
+  </table>
+</EpisodeTable>
