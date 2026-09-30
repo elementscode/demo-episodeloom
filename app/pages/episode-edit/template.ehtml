@@ -1,0 +1,227 @@
+import "./style.css";
+import { File, ValidationError, raw, redirect } from "@elements/app";
+import favicon from "#app/shared/assets/favicons/favicon.svg";
+import { Layout } from "#app/shared/templates/layout";
+import { Player } from "#app/shared/templates/player";
+import { Episode, Show, audioUrl, formatDuration, isPublished } from "#app/shared/services/podcasts";
+import { renderNotes } from "#app/shared/services/markdown";
+import { MAX_AUDIO_MB, deleteEpisode, saveEpisode } from "./services";
+
+interface EpisodeDraft {
+  title: string;
+  number: number;
+  notes: string;
+  when: string;
+  scheduleAt: string;
+  durationSeconds: number;
+  audio?: File;
+}
+
+interface EditorState {
+  draft: EpisodeDraft;
+  errors: Record<string, string[]>;
+  error: string;
+  tab: string;
+  saving: boolean;
+}
+
+/** A Date as the value a datetime-local input takes, in the browser's zone. */
+function localInput(date: Date): string {
+  let d = new Date(date);
+  let pad = (n: number) => String(n).padStart(2, "0");
+
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function tomorrowMorning(): Date {
+  let d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(7, 0, 0, 0);
+
+  return d;
+}
+
+function initialState(episode: Episode | null, nextNumber: number): EditorState {
+  let scheduled = episode ? !isPublished(episode) : false;
+
+  return {
+    draft: {
+      title: episode?.title ?? "",
+      number: episode?.number ?? nextNumber,
+      notes: episode?.notes ?? "",
+      when: scheduled ? "schedule" : "now",
+      scheduleAt: localInput(scheduled ? episode!.publishAt : tomorrowMorning()),
+      durationSeconds: episode?.durationSeconds ?? 0,
+    },
+    errors: {},
+    error: "",
+    tab: "write",
+    saving: false,
+  };
+}
+
+// The browser can read an audio file's length without uploading it, so the
+// feed's itunes:duration comes from the file the podcaster picked.
+function onAudioChange(event: Event, draft: EpisodeDraft) {
+  let file = (event.currentTarget as HTMLInputElement).files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  let probe = new Audio();
+  probe.preload = "metadata";
+  probe.onloadedmetadata = () => {
+    draft.durationSeconds = Math.round(probe.duration || 0);
+    URL.revokeObjectURL(probe.src);
+  };
+  probe.src = URL.createObjectURL(file);
+}
+
+function publishDate(draft: EpisodeDraft, episode: Episode | null): Date {
+  if (draft.when === "schedule") {
+    return new Date(draft.scheduleAt);
+  }
+
+  // Keep an already-published episode's original date when it is edited.
+  return episode && isPublished(episode) ? new Date(episode.publishAt) : new Date();
+}
+
+function onSubmit(state: EditorState, show: Show, episode: Episode | null) {
+  state.saving = true;
+
+  try {
+    saveEpisode(show.id, episode?.id ?? "", {
+      title: state.draft.title,
+      number: Number(state.draft.number),
+      notes: state.draft.notes,
+      publishAt: publishDate(state.draft, episode),
+      durationSeconds: state.draft.durationSeconds,
+      audio: state.draft.audio,
+    });
+    state.errors = {};
+    redirect("/dashboard");
+  } catch (err: any) {
+    if (err instanceof ValidationError && typeof err.errors === "object") {
+      state.errors = err.errors as Record<string, string[]>;
+      state.error = "Check the highlighted fields.";
+    } else {
+      state.error = err.message;
+    }
+  } finally {
+    state.saving = false;
+  }
+}
+
+function onDelete(episode: Episode) {
+  if (!confirm(`Delete "${episode.title}"? Its downloads go with it.`)) {
+    return;
+  }
+
+  deleteEpisode(episode.id);
+  redirect("/dashboard");
+}
+
+<html lang="en" class="page-episode-edit" (
+  show: Show,
+  episode: Episode | null,
+  nextNumber: number,
+  private state: EditorState = initialState(episode, nextNumber),
+)>
+  <head>
+    <title>{episode ? `Edit ${episode.title}` : "New episode"} · {show.title}</title>
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+  </head>
+  <body>
+    <Layout width="is-form">
+      <div class="stack is-xl">
+        <div class="stack is-xs">
+          <a href="/dashboard" class="text-sm">← Dashboard</a>
+          <p class="eyebrow">{show.title}</p>
+          <h1>{episode ? "Edit episode" : "New episode"}</h1>
+        </div>
+
+        <form class="card" onsubmit={() => onSubmit(state, show, episode)}>
+          <div class="card-body stack is-lg">
+            <p e:if={state.error} class="callout is-danger" role="alert">{state.error}</p>
+
+            <div class="form-grid episode-title-row">
+              <div class="field">
+                <label for="title">Title</label>
+                <input id="title" value={state.draft.title} class={[state.errors.title && "is-error"]} required>
+                <p e:if={state.errors.title} class="error">{state.errors.title?.[0]}</p>
+              </div>
+
+              <div class="field">
+                <label for="number">Episode number</label>
+                <input id="number" type="number" min="1" value={state.draft.number} class={[state.errors.number && "is-error"]} required>
+                <p e:if={state.errors.number} class="error">{state.errors.number?.[0]}</p>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Audio</label>
+              <Player e:if={episode} src={audioUrl(show, episode!)} duration={episode!.durationSeconds} compact={true} />
+              <input type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,.mp3,.m4a" value={state.draft.audio}
+                     class={[state.errors.audio && "is-error"]}
+                     onchange={(e) => onAudioChange(e, state.draft)}>
+              <p e:if={state.errors.audio} class="error">{state.errors.audio?.[0]}</p>
+              <p e:elseif={state.draft.audio} class="hint">{state.draft.audio?.name} · {formatDuration(state.draft.durationSeconds)}</p>
+              <p e:else class="hint">{episode ? "Choose a file to replace the audio." : `MP3 or M4A, up to ${MAX_AUDIO_MB} MB.`}</p>
+            </div>
+
+            <div class="field">
+              <div class="head">
+                <label for="notes">Show notes</label>
+                <span class="helper">Markdown</span>
+              </div>
+              <div class="tabs">
+                <div class="tab-list">
+                  <button type="button" class={["tab", state.tab === "write" && "is-active"]} onclick={() => state.tab = "write"}>Write</button>
+                  <button type="button" class={["tab", state.tab === "preview" && "is-active"]} onclick={() => state.tab = "preview"}>Preview</button>
+                </div>
+                <div class="tab-panel">
+                  <textarea e:if={state.tab === "write"} id="notes" class="notes-input" value={state.draft.notes}
+                            placeholder="What's this episode about? Links, timestamps and credits go here."/>
+                  <div e:else class="notes-preview prose">{raw(renderNotes(state.draft.notes || "_Nothing to preview yet._"))}</div>
+                </div>
+              </div>
+            </div>
+
+            <fieldset class="stack">
+              <legend>Publish</legend>
+              <div class="cluster publish-options">
+                <label><input type="radio" name="when" value="now" group={state.draft.when}> {episode && isPublished(episode!) ? "Published" : "Publish now"}</label>
+                <label><input type="radio" name="when" value="schedule" group={state.draft.when}> Schedule</label>
+              </div>
+              <div e:if={state.draft.when === "schedule"} class="field">
+                <label for="scheduleAt">Goes live</label>
+                <input id="scheduleAt" type="datetime-local" value={state.draft.scheduleAt}
+                       class={[state.errors.publishAt && "is-error"]} required>
+                <p e:if={state.errors.publishAt} class="error">{state.errors.publishAt?.[0]}</p>
+                <p e:else class="hint">It joins the feed and your show page at this time.</p>
+              </div>
+            </fieldset>
+          </div>
+
+          <div class="card-foot">
+            <a class="button is-ghost" href="/dashboard">Cancel</a>
+            <button type="submit" class={["is-primary", state.saving && "is-loading"]} disabled={state.saving}>
+              {state.draft.when === "schedule" ? "Schedule episode" : episode ? "Save changes" : "Publish episode"}
+            </button>
+          </div>
+        </form>
+
+        <div e:if={episode} class="card">
+          <div class="card-body row danger-zone">
+            <div>
+              <strong>Delete this episode</strong>
+              <p class="hint">It leaves the feed, and its download history is removed.</p>
+            </div>
+            <button class="is-danger" onclick={() => onDelete(episode!)}>Delete episode</button>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  </body>
+</html>

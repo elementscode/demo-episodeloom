@@ -1,0 +1,39 @@
+import "./style.css";
+import { redirect, session } from "@elements/app";
+import { signout } from "#app/shared/services/auth";
+
+function onSignout() {
+  signout();
+  redirect("/");
+}
+
+<Layout (width: string = "")>
+  <div class="app">
+    <header class="site-header">
+      <div class={["page-shell", width, "row", "site-header-inner"]}>
+        <a href="/" class="site-brand row">
+          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="24" height="24" rx="6" fill="currentColor"/>
+            <path d="M7 15.5v-7M10.3 18v-12M13.7 16v-8M17 13.5v-3" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          episodeloom
+        </a>
+
+        <nav class="cluster site-nav">
+          <a href="/" class="nav-wide">Shows</a>
+          <a e:if={session.isLoggedIn()} href="/dashboard">Dashboard</a>
+          <button e:if={session.isLoggedIn()} class="is-ghost is-sm" onclick={() => onSignout()}>Sign out</button>
+          <a e:else href="/signin" class="button is-sm">Sign in</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class={["page-shell", width, "site-main"]}>
+      <slot/>
+    </main>
+
+    <footer class="site-footer">
+      <div class={["page-shell", width]}>episodeloom · podcast hosting with an open RSS feed for every show</div>
+    </footer>
+  </div>
+</Layout>

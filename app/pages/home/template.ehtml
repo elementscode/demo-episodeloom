@@ -1,0 +1,36 @@
+import "./style.css";
+import favicon from "#app/shared/assets/favicons/favicon.svg";
+import { Layout } from "#app/shared/templates/layout";
+import { Show, coverUrl, showUrl } from "#app/shared/services/podcasts";
+
+<html lang="en" class="page-home" (shows: Show[])>
+  <head>
+    <title>episodeloom · podcasts worth the listen</title>
+    <meta name="description" content="Listen to shows hosted on episodeloom, or start your own.">
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+  </head>
+  <body>
+    <Layout>
+      <div class="stack is-2xl">
+        <div class="page-hero is-sm home-intro">
+          <p class="eyebrow">Podcasts on episodeloom</p>
+          <h1 class="display">Shows worth the listen.</h1>
+          <p class="lede">Every show here has an open RSS feed, so you can follow it in Apple Podcasts, Spotify, or any app you like.</p>
+          <div class="cluster">
+            <a href="/signup" class="button is-primary">Host your podcast</a>
+          </div>
+        </div>
+
+        <ul class="show-grid">
+          <li e:for={show of shows}>
+            <a class="show-tile" href={showUrl(show)}>
+              <img src={coverUrl(show)} alt="" width="400" height="400">
+              <h2>{show.title}</h2>
+              <p>{show.author} · {show.category.split(" > ").pop()}</p>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </Layout>
+  </body>
+</html>

@@ -1,0 +1,139 @@
+.show-head {
+  display: grid;
+  grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+  gap: var(--space-10);
+  align-items: start;
+}
+
+.show-cover {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.show-head h1 {
+  margin: 0;
+}
+
+.show-byline {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.show-description {
+  margin: 0;
+  max-width: 38rem;
+}
+
+.feed-url {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.episode-list {
+  padding: 0;
+  list-style: none;
+}
+
+.episode-row {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  align-items: baseline;
+  padding-block: var(--space-5);
+  border-top: 1px solid var(--rule);
+}
+
+.episode-number {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.episode-row h3 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-lg);
+}
+
+.episode-row h3 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.episode-row h3 a:hover {
+  color: var(--accent);
+}
+
+.episode-row p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.episode-meta {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+
+.show-notes > :first-child {
+  margin-top: 0;
+}
+
+@media (max-width: 45rem) {
+  .show-head {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .show-cover {
+    max-width: 14rem;
+  }
+
+  .episode-row {
+    grid-template-columns: 2rem minmax(0, 1fr);
+  }
+
+  .episode-meta {
+    grid-column: 2;
+  }
+}
+
+.episode-show {
+  gap: var(--space-4);
+  color: inherit;
+  text-decoration: none;
+}
+
+.episode-show img {
+  display: block;
+  border-radius: var(--radius-md);
+}
+
+.episode-show strong {
+  display: block;
+}
+
+.episode-show span {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.episode-title {
+  margin: 0;
+}
+
+.episode-nav {
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--rule);
+  font-size: var(--text-sm);
+}

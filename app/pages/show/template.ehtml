@@ -1,0 +1,82 @@
+import "./style.css";
+import favicon from "#app/shared/assets/favicons/favicon.svg";
+import { Layout } from "#app/shared/templates/layout";
+import {
+  Episode,
+  Show,
+  coverUrl,
+  episodeUrl,
+  feedUrl,
+  formatDuration,
+  subscribeLinks,
+  notesSummary,
+} from "#app/shared/services/podcasts";
+
+async function onCopy(url: string, copied: { value: boolean }) {
+  await navigator.clipboard.writeText(url);
+  copied.value = true;
+  setTimeout(() => copied.value = false, 1600);
+}
+
+function formatDate(date: Date): string {
+  return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+<html lang="en" class="page-show" (
+  show: Show,
+  episodes: Episode[],
+  origin: string,
+  private copied: { value: boolean } = { value: false },
+)>
+  <head>
+    <title>{show.title} · episodeloom</title>
+    <meta name="description" content={notesSummary(show.description, 160)}>
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+    <link rel="alternate" type="application/rss+xml" title={show.title} href={origin + feedUrl(show)}>
+  </head>
+  <body>
+    <Layout>
+      <div class="stack is-2xl">
+        <section class="show-head">
+          <img class="show-cover" src={coverUrl(show)} alt={`${show.title} cover art`} width="288" height="288">
+
+          <div class="stack is-lg">
+            <div class="stack is-sm">
+              <p class="eyebrow">{show.category.replace(" > ", " · ")}</p>
+              <h1>{show.title}</h1>
+              <p class="show-byline">by {show.author}</p>
+            </div>
+
+            <p class="show-description">{show.description}</p>
+
+            <div class="stack is-sm">
+              <h2 class="text-sm">Subscribe</h2>
+              <div class="cluster is-sm">
+                <a e:for={link of subscribeLinks(origin, show)} class="button is-sm" href={link.href}>{link.label}</a>
+                <button class="is-sm" onclick={() => onCopy(origin + feedUrl(show), copied)}>
+                  {copied.value ? "Copied" : "Copy RSS"}
+                </button>
+              </div>
+              <a class="feed-url" href={feedUrl(show)}>{(origin + feedUrl(show)).replace(/^https?:\/\//, "")}</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="stack">
+          <h2>{episodes.length} {episodes.length === 1 ? "episode" : "episodes"}</h2>
+
+          <ol class="episode-list">
+            <li e:for={episode of episodes} class="episode-row">
+              <span class="episode-number">#{episode.number}</span>
+              <div>
+                <h3><a href={episodeUrl(show, episode)}>{episode.title}</a></h3>
+                <p>{notesSummary(episode.notes, 160)}</p>
+              </div>
+              <span class="episode-meta">{formatDate(episode.publishAt)} · {formatDuration(episode.durationSeconds)}</span>
+            </li>
+          </ol>
+        </section>
+      </div>
+    </Layout>
+  </body>
+</html>
