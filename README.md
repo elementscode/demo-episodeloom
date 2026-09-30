@@ -1,12 +1,12 @@
-![Episodeloom, a podcast hosting app built with Elements: the public page for The Slow Kitchen, with its cover art, subscribe links, RSS feed url and the episode list.](POSTER_URL)
+![Episodeloom, a podcast hosting app built with Elements: the public page for The Slow Kitchen, with its cover art, subscribe links, RSS feed url and the episode list.](https://elements.dev/demos/01a0f402-15b7-7df5-9113-ec79d4c3f787/poster?v=173588b542a3)
 
 # Episodeloom
 
 > A demo app built with [Elements](https://elements.dev).
 
-Shows with cover art, episodes with audio and markdown show notes, a public RSS feed for podcast apps, episode pages with a player, and live download counts.
+Shows with cover art, episodes with audio and markdown notes, an RSS feed for podcast apps, public player pages, and live download counts.
 
-**Demo:** [Episodeloom](DEMO_URL)
+**Demo:** [Episodeloom](https://elements.dev/demos/01a0f402-15b7-7df5-9113-ec79d4c3f787)
 
 ## Agent specs
 
