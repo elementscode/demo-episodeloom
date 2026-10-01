@@ -36,9 +36,13 @@ Episodeloom needed podcaster accounts, cover and audio uploads, an RSS feed per 
 - **Sessions.** `app/shared/services/auth.ts` holds sign up and sign in as `@rpc` functions, and each editor checks that the show belongs to the signed-in podcaster.
 - **Data from SQL files.** Three migrations define the schema and seed two podcasters, two shows with cover art, six short spoken episodes each, scheduled episodes, and a month of download counts. The project server applied each one as soon as it was saved.
 
-### What the agent got from the tooling
+### What the project server gave the agent
 
-The agent ran 34 builds in 21 minutes. It checked its work after each edit and kept going. The build caught two errors, a misnamed import from a markdown package and a string passed where the player wanted a number. It read 36 manual pages as it reached each part, from `recipes/file-upload` and `livetable/partitions` to `recipes/live-from-sql`, then wrote 41 tests. In a real browser it uploaded and published an episode, scheduled another, signed up a new podcaster, watched the dashboard's counts rise while it downloaded audio, and checked every page at phone width.
+The project server runs alongside the agent and answers as soon as a file is saved: it type-checks the templates, TypeScript and SQL, applies migrations and reruns the tests, so every question came back right away and the agent kept building.
+
+### What shipped
+
+The app type-checks with zero errors and all 41 tests pass. Every page was checked on desktop and phone before publishing, both feeds parse as valid XML, and a play in the browser showed up on the open dashboard live. The repo was installed fresh from GitHub and run before the demo went live.
 
 Start in `app/routes/audio.ts`.
 
