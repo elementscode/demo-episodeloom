@@ -38,7 +38,7 @@ Episodeloom needed podcaster accounts, cover and audio uploads, an RSS feed per 
 
 ### What the agent got from the tooling
 
-The agent ran 34 builds in 21 minutes. By the build's own timer, the median build finished in 48 milliseconds, so it checked its work after each edit and kept going. The build caught two errors, a misnamed import from a markdown package and a string passed where the player wanted a number. It read 36 manual pages as it reached each part, from `recipes/file-upload` and `livetable/partitions` to `recipes/live-from-sql`, then wrote 41 tests. In a real browser it uploaded and published an episode, scheduled another, signed up a new podcaster, watched the dashboard's counts rise while it downloaded audio, and checked every page at phone width.
+The agent ran 34 builds in 21 minutes. It checked its work after each edit and kept going. The build caught two errors, a misnamed import from a markdown package and a string passed where the player wanted a number. It read 36 manual pages as it reached each part, from `recipes/file-upload` and `livetable/partitions` to `recipes/live-from-sql`, then wrote 41 tests. In a real browser it uploaded and published an episode, scheduled another, signed up a new podcaster, watched the dashboard's counts rise while it downloaded audio, and checked every page at phone width.
 
 Start in `app/routes/audio.ts`.
 
