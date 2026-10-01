@@ -42,7 +42,7 @@ The project server runs alongside the agent and answers as soon as a file is sav
 
 ### What shipped
 
-The app type-checks with zero errors and all 41 tests pass. Every page was checked on desktop and phone before publishing, both feeds parse as valid XML, and a play in the browser showed up on the open dashboard live.
+The app type-checks with zero errors and all 41 tests pass. Every page works on desktop and phone, both feeds parse as valid XML, and live updates arrive on the dashboard, such as a play in the browser raising the episode's download count.
 
 Start in `app/routes/audio.ts`.
 
