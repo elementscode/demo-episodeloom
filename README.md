@@ -23,6 +23,25 @@ app.
 elements create episodeloom -scaffold=elementscode/demo-episodeloom
 ```
 
+## How it's built
+
+Episodeloom needed podcaster accounts, cover and audio uploads, an RSS feed per show, download counting from the audio url, and a dashboard that counts as people listen. Each of those is a part of Elements, so the agent spent its 21 minutes on podcasting itself.
+
+### What Elements gave the app
+
+- **Live download counts.** `downloadDays` is a LiveTable in `app/shared/services/downloads.ts`, partitioned by podcaster. The audio route writes counts in plain SQL, and a trigger in the schema migration notifies the table's pinned channel, so the dashboard's numbers rise as listeners download.
+- **Audio served by one route.** `app/routes/audio.ts` answers range requests the way podcast apps expect, and `recordDownload` counts each listener once per episode per day, however many ranges their app asks for.
+- **File uploads as form fields.** `saveEpisode` in `app/pages/episode-edit/services.ts` takes the audio as a `File`, and the show editor takes the cover the same way. Both are stored in the database and served from their own routes.
+- **A feed in one route.** `app/routes/feed.ts` builds each show's RSS at `/shows/:slug/feed.xml`, with the tags podcast directories read. An episode with a future `publishAt` joins the feed and the show page when its time comes.
+- **Sessions.** `app/shared/services/auth.ts` holds sign up and sign in as `@rpc` functions, and each editor checks that the show belongs to the signed-in podcaster.
+- **Data from SQL files.** Three migrations define the schema and seed two podcasters, two shows with cover art, six short spoken episodes each, scheduled episodes, and a month of download counts. The project server applied each one as soon as it was saved.
+
+### What the agent got from the tooling
+
+The agent ran 34 builds in 21 minutes. By the build's own timer, the median build finished in 48 milliseconds, so it checked its work after each edit and kept going. The build caught two errors, a misnamed import from a markdown package and a string passed where the player wanted a number. It read 36 manual pages as it reached each part, from `recipes/file-upload` and `livetable/partitions` to `recipes/live-from-sql`, then wrote 41 tests. In a real browser it uploaded and published an episode, scheduled another, signed up a new podcaster, watched the dashboard's counts rise while it downloaded audio, and checked every page at phone width.
+
+Start in `app/routes/audio.ts`.
+
 ## Seed data and demo accounts
 
 The seed creates two podcasters, each with one show. Both shows have cover art
