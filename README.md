@@ -30,10 +30,15 @@ Episodeloom needed podcaster accounts, cover and audio uploads, an RSS feed per 
 ### What Elements gave the app
 
 - **Live download counts.** Downloads per episode per day are a LiveTable, one view per podcaster. The audio url records each download in plain SQL and a database trigger broadcasts it, so the dashboard's numbers rise as people listen.
+
 - **Audio that counts listens.** The audio url answers the range requests podcast apps make and counts each listener once per episode per day, however many pieces of the file their app asks for.
+
 - **Cover and audio uploads.** The show and episode editors send cover art and audio as file fields to `@rpc` functions, which store them for the public pages and the feed.
+
 - **An RSS feed per show.** One route builds each show's feed with the tags podcast directories read. An episode scheduled for later joins the feed and the show page when its time comes.
+
 - **Sessions.** Podcasters sign up and sign in, and each editor checks that the show belongs to the signed-in podcaster.
+
 - **Data from SQL files.** Migrations define the schema and seed two podcasters, two shows with cover art, six short spoken episodes each, scheduled episodes and a month of download counts. The project server applied each one as soon as it was saved.
 
 ### What the project server gave the agent
