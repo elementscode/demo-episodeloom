@@ -29,12 +29,12 @@ Episodeloom needed podcaster accounts, cover and audio uploads, an RSS feed per 
 
 ### What Elements gave the app
 
-- **Live download counts.** `downloadDays` is a LiveTable in `app/shared/services/downloads.ts`, partitioned by podcaster. The audio route writes counts in plain SQL, and a trigger in the schema migration notifies the table's pinned channel, so the dashboard's numbers rise as listeners download.
-- **Audio served by one route.** `app/routes/audio.ts` answers range requests the way podcast apps expect, and `recordDownload` counts each listener once per episode per day, however many ranges their app asks for.
-- **File uploads as form fields.** `saveEpisode` in `app/pages/episode-edit/services.ts` takes the audio as a `File`, and the show editor takes the cover the same way. Both are stored in the database and served from their own routes.
-- **A feed in one route.** `app/routes/feed.ts` builds each show's RSS at `/shows/:slug/feed.xml`, with the tags podcast directories read. An episode with a future `publishAt` joins the feed and the show page when its time comes.
-- **Sessions.** `app/shared/services/auth.ts` holds sign up and sign in as `@rpc` functions, and each editor checks that the show belongs to the signed-in podcaster.
-- **Data from SQL files.** Three migrations define the schema and seed two podcasters, two shows with cover art, six short spoken episodes each, scheduled episodes, and a month of download counts. The project server applied each one as soon as it was saved.
+- **Live download counts.** Downloads per episode per day are a LiveTable, one view per podcaster. The audio url records each download in plain SQL and a database trigger broadcasts it, so the dashboard's numbers rise as people listen.
+- **Audio that counts listens.** The audio url answers the range requests podcast apps make and counts each listener once per episode per day, however many pieces of the file their app asks for.
+- **Cover and audio uploads.** The show and episode editors send cover art and audio as file fields to `@rpc` functions, which store them for the public pages and the feed.
+- **An RSS feed per show.** One route builds each show's feed with the tags podcast directories read. An episode scheduled for later joins the feed and the show page when its time comes.
+- **Sessions.** Podcasters sign up and sign in, and each editor checks that the show belongs to the signed-in podcaster.
+- **Data from SQL files.** Migrations define the schema and seed two podcasters, two shows with cover art, six short spoken episodes each, scheduled episodes and a month of download counts. The project server applied each one as soon as it was saved.
 
 ### What the project server gave the agent
 
@@ -43,8 +43,6 @@ The project server runs alongside the agent and answers as soon as a file is sav
 ### What shipped
 
 The app type-checks with zero errors and all 41 tests pass. Every page works on desktop and phone, both feeds parse as valid XML, and live updates arrive on the dashboard, such as a play in the browser raising the episode's download count.
-
-Start in `app/routes/audio.ts`.
 
 ## Seed data and demo accounts
 
