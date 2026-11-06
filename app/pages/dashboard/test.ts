@@ -1,6 +1,6 @@
 import { test, equal } from "@elements/app";
 import { DownloadDay } from "#app/shared/services/downloads";
-import { dailyTotals, episodeTotals, lastDays, niceMax, sumLast } from "./stats";
+import { dailyTotals, episodeTotals, lastDays, sumLast } from "./stats";
 
 function row(episodeId: string, showId: string, day: string, count: number): DownloadDay {
   return { id: `${episodeId}-${day}`, userId: "u", showId, episodeId, day, count };
@@ -29,12 +29,5 @@ test("dashboard stats", () => {
     let totals = episodeTotals(rows, days);
     equal(totals.get("e1"), { today: 2, week: 7, month: 7 });
     equal(totals.get("e2"), { today: 7, week: 7, month: 7 });
-  });
-
-  test("niceMax rounds up", () => {
-    equal(niceMax(0), 10);
-    equal(niceMax(412), 500);
-    equal(niceMax(1017), 2000);
-    equal(niceMax(180), 200);
   });
 });

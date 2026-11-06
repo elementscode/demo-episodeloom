@@ -1,11 +1,11 @@
 import { DownloadDay } from "#app/shared/services/downloads";
 
-export interface DayTotal {
+export type DayTotal = {
   id: string;
   day: string;
   label: string;
   count: number;
-}
+};
 
 export interface EpisodeTotals {
   today: number;
@@ -73,21 +73,4 @@ export function episodeTotals(rows: Iterable<DownloadDay>, days: string[]): Map<
   }
 
   return totals;
-}
-
-/** A round axis maximum a little above the tallest bar. */
-export function niceMax(value: number): number {
-  if (value <= 0) {
-    return 10;
-  }
-
-  let step = Math.pow(10, Math.floor(Math.log10(value)));
-
-  for (let m of [1, 2, 2.5, 5, 10]) {
-    if (m * step >= value) {
-      return m * step;
-    }
-  }
-
-  return 10 * step;
 }
