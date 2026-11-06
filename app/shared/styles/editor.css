@@ -53,17 +53,6 @@
   margin-top: 0;
 }
 
-.publish-options {
-  gap: var(--space-5);
-}
-
-.publish-options label {
-  display: inline-flex;
-  gap: var(--space-2);
-  align-items: center;
-  font-weight: var(--weight-normal);
-}
-
 .danger-zone {
   justify-content: space-between;
   gap: var(--space-4);

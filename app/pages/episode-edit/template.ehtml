@@ -1,5 +1,16 @@
 import "./style.css";
 import { File, ValidationError, raw, redirect } from "@elements/app";
+import { Alert } from "@elements/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogFooter } from "@elements/ui/alert-dialog";
+import { Button } from "@elements/ui/button";
+import { Card, CardContent } from "@elements/ui/card";
+import { DatePicker } from "@elements/ui/date-picker";
+import { Field, FieldLabel, FieldLegend, FieldSet } from "@elements/ui/field";
+import { Input } from "@elements/ui/input";
+import { RadioGroup } from "@elements/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@elements/ui/tabs";
+import { Textarea } from "@elements/ui/textarea";
+import { TimePicker } from "@elements/ui/time-picker";
 import favicon from "#app/shared/assets/favicons/favicon.svg";
 import { Layout } from "#app/shared/templates/layout";
 import { Player } from "#app/shared/templates/player";
@@ -9,10 +20,11 @@ import { MAX_AUDIO_MB, deleteEpisode, saveEpisode } from "./services";
 
 interface EpisodeDraft {
   title: string;
-  number: number;
+  number: string;
   notes: string;
   when: string;
-  scheduleAt: string;
+  scheduleDate: string;
+  scheduleTime: string;
   durationSeconds: number;
   audio?: File;
 }
@@ -25,12 +37,20 @@ interface EditorState {
   saving: boolean;
 }
 
-/** A Date as the value a datetime-local input takes, in the browser's zone. */
-function localInput(date: Date): string {
-  let d = new Date(date);
-  let pad = (n: number) => String(n).padStart(2, "0");
+const pad = (n: number) => String(n).padStart(2, "0");
 
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+/** A Date's day as the ISO date a DatePicker takes, in the browser's zone. */
+function localDate(date: Date): string {
+  let d = new Date(date);
+
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** A Date's time of day as the HH:MM a TimePicker takes, in the browser's zone. */
+function localTime(date: Date): string {
+  let d = new Date(date);
+
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function tomorrowMorning(): Date {
@@ -43,14 +63,16 @@ function tomorrowMorning(): Date {
 
 function initialState(episode: Episode | null, nextNumber: number): EditorState {
   let scheduled = episode ? !isPublished(episode) : false;
+  let scheduleAt = scheduled ? episode!.publishAt : tomorrowMorning();
 
   return {
     draft: {
       title: episode?.title ?? "",
-      number: episode?.number ?? nextNumber,
+      number: String(episode?.number ?? nextNumber),
       notes: episode?.notes ?? "",
       when: scheduled ? "schedule" : "now",
-      scheduleAt: localInput(scheduled ? episode!.publishAt : tomorrowMorning()),
+      scheduleDate: localDate(scheduleAt),
+      scheduleTime: localTime(scheduleAt),
       durationSeconds: episode?.durationSeconds ?? 0,
     },
     errors: {},
@@ -80,7 +102,7 @@ function onAudioChange(event: Event, draft: EpisodeDraft) {
 
 function publishDate(draft: EpisodeDraft, episode: Episode | null): Date {
   if (draft.when === "schedule") {
-    return new Date(draft.scheduleAt);
+    return new Date(`${draft.scheduleDate}T${draft.scheduleTime}`);
   }
 
   // Keep an already-published episode's original date when it is edited.
@@ -113,11 +135,14 @@ function onSubmit(state: EditorState, show: Show, episode: Episode | null) {
   }
 }
 
-function onDelete(episode: Episode) {
-  if (!confirm(`Delete "${episode.title}"? Its downloads go with it.`)) {
-    return;
-  }
+function publishOptions(episode: Episode | null): { value: string; label: string }[] {
+  return [
+    { value: "now", label: episode && isPublished(episode) ? "Published" : "Publish now" },
+    { value: "schedule", label: "Schedule" },
+  ];
+}
 
+function onDelete(episode: Episode) {
   deleteEpisode(episode.id);
   redirect("/dashboard");
 }
@@ -143,84 +168,84 @@ function onDelete(episode: Episode) {
 
         <form class="card" onsubmit={() => onSubmit(state, show, episode)}>
           <div class="card-body stack is-lg">
-            <p e:if={state.error} class="callout is-danger" role="alert">{state.error}</p>
+            <Alert e:if={state.error} variant="danger" description={state.error} />
 
             <div class="form-grid episode-title-row">
-              <div class="field">
-                <label for="title">Title</label>
-                <input id="title" value={state.draft.title} class={[state.errors.title && "is-error"]} required>
-                <p e:if={state.errors.title} class="error">{state.errors.title?.[0]}</p>
-              </div>
+              <Field label="Title" error={state.errors.title?.[0] ?? ""}>
+                <Input value={state.draft.title} required attrs={{ id: "title" }} />
+              </Field>
 
-              <div class="field">
-                <label for="number">Episode number</label>
-                <input id="number" type="number" min="1" value={state.draft.number} class={[state.errors.number && "is-error"]} required>
-                <p e:if={state.errors.number} class="error">{state.errors.number?.[0]}</p>
-              </div>
+              <Field label="Episode number" error={state.errors.number?.[0] ?? ""}>
+                <Input type="number" value={state.draft.number} required attrs={{ id: "number", min: 1 }} />
+              </Field>
             </div>
 
-            <div class="field">
-              <label>Audio</label>
+            <Field label="Audio" error={state.errors.audio?.[0] ?? ""}
+                   description={state.draft.audio ? `${state.draft.audio?.name} · ${formatDuration(state.draft.durationSeconds)}` : episode ? "Choose a file to replace the audio." : `MP3 or M4A, up to ${MAX_AUDIO_MB} MB.`}>
               <Player e:if={episode} src={audioUrl(show, episode!)} duration={episode!.durationSeconds} compact={true} />
               <input type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,.mp3,.m4a" value={state.draft.audio}
                      class={[state.errors.audio && "is-error"]}
                      onchange={(e) => onAudioChange(e, state.draft)}>
-              <p e:if={state.errors.audio} class="error">{state.errors.audio?.[0]}</p>
-              <p e:elseif={state.draft.audio} class="hint">{state.draft.audio?.name} · {formatDuration(state.draft.durationSeconds)}</p>
-              <p e:else class="hint">{episode ? "Choose a file to replace the audio." : `MP3 or M4A, up to ${MAX_AUDIO_MB} MB.`}</p>
-            </div>
+            </Field>
 
-            <div class="field">
+            <Field>
               <div class="head">
-                <label for="notes">Show notes</label>
+                <FieldLabel>Show notes</FieldLabel>
                 <span class="helper">Markdown</span>
               </div>
-              <div class="tabs">
-                <div class="tab-list">
-                  <button type="button" class={["tab", state.tab === "write" && "is-active"]} onclick={() => state.tab = "write"}>Write</button>
-                  <button type="button" class={["tab", state.tab === "preview" && "is-active"]} onclick={() => state.tab = "preview"}>Preview</button>
-                </div>
-                <div class="tab-panel">
-                  <textarea e:if={state.tab === "write"} id="notes" class="notes-input" value={state.draft.notes}
-                            placeholder="What's this episode about? Links, timestamps and credits go here."/>
-                  <div e:else class="notes-preview prose">{raw(renderNotes(state.draft.notes || "_Nothing to preview yet._"))}</div>
-                </div>
-              </div>
-            </div>
+              <Tabs value={state.tab} class="stack is-sm">
+                <TabsList label="Show notes">
+                  <TabsTrigger value="write">Write</TabsTrigger>
+                  <TabsTrigger value="preview">Preview</TabsTrigger>
+                </TabsList>
+                <TabsContent value="write">
+                  <Textarea value={state.draft.notes} rows={10} class="notes-input" attrs={{ id: "notes" }}
+                            placeholder="What's this episode about? Links, timestamps and credits go here." />
+                </TabsContent>
+                <TabsContent value="preview">
+                  <div class="notes-preview prose">{raw(renderNotes(state.draft.notes || "_Nothing to preview yet._"))}</div>
+                </TabsContent>
+              </Tabs>
+            </Field>
 
-            <fieldset class="stack">
-              <legend>Publish</legend>
-              <div class="cluster publish-options">
-                <label><input type="radio" name="when" value="now" group={state.draft.when}> {episode && isPublished(episode!) ? "Published" : "Publish now"}</label>
-                <label><input type="radio" name="when" value="schedule" group={state.draft.when}> Schedule</label>
-              </div>
-              <div e:if={state.draft.when === "schedule"} class="field">
-                <label for="scheduleAt">Goes live</label>
-                <input id="scheduleAt" type="datetime-local" value={state.draft.scheduleAt}
-                       class={[state.errors.publishAt && "is-error"]} required>
-                <p e:if={state.errors.publishAt} class="error">{state.errors.publishAt?.[0]}</p>
-                <p e:else class="hint">It joins the feed and your show page at this time.</p>
-              </div>
-            </fieldset>
+            <FieldSet class="stack">
+              <FieldLegend>Publish</FieldLegend>
+              <RadioGroup value={state.draft.when} name="when" orientation="horizontal"
+                          options={publishOptions(episode)} attrs={{ "aria-label": "Publish" }} />
+              <Field e:if={state.draft.when === "schedule"} label="Goes live"
+                     description="It joins the feed and your show page at this time."
+                     error={state.errors.publishAt?.[0] ?? ""}>
+                <div class="cluster">
+                  <DatePicker value={state.draft.scheduleDate} required attrs={{ id: "scheduleAt" }} />
+                  <TimePicker value={state.draft.scheduleTime} required label="Time" />
+                </div>
+              </Field>
+            </FieldSet>
           </div>
 
           <div class="card-foot">
-            <a class="button is-ghost" href="/dashboard">Cancel</a>
-            <button type="submit" class={["is-primary", state.saving && "is-loading"]} disabled={state.saving}>
+            <Button variant="ghost" href="/dashboard">Cancel</Button>
+            <Button type="submit" variant="primary" loading={state.saving}>
               {state.draft.when === "schedule" ? "Schedule episode" : episode ? "Save changes" : "Publish episode"}
-            </button>
+            </Button>
           </div>
         </form>
 
-        <div e:if={episode} class="card">
-          <div class="card-body row danger-zone">
+        <Card e:if={episode}>
+          <CardContent class="row danger-zone">
             <div>
               <strong>Delete this episode</strong>
               <p class="hint">It leaves the feed, and its download history is removed.</p>
             </div>
-            <button class="is-danger" onclick={() => onDelete(episode!)}>Delete episode</button>
-          </div>
-        </div>
+            <AlertDialog title={`Delete "${episode!.title}"?`} description="Its downloads go with it.">
+              <Button slot="trigger" variant="danger">Delete episode</Button>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction variant="danger" onclick={() => onDelete(episode!)}>Delete episode</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialog>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   </body>
