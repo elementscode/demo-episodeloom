@@ -1,4 +1,5 @@
 import "./style.css";
+import { Button } from "@elements/ui/button";
 import favicon from "#app/shared/assets/favicons/favicon.svg";
 import { Layout } from "#app/shared/templates/layout";
 import {
@@ -52,10 +53,10 @@ function formatDate(date: Date): string {
             <div class="stack is-sm">
               <h2 class="text-sm">Subscribe</h2>
               <div class="cluster is-sm">
-                <a e:for={link of subscribeLinks(origin, show)} class="button is-sm" href={link.href}>{link.label}</a>
-                <button class="is-sm" onclick={() => onCopy(origin + feedUrl(show), copied)}>
+                <Button e:for={link of subscribeLinks(origin, show)} size="sm" href={link.href}>{link.label}</Button>
+                <Button size="sm" onclick={() => onCopy(origin + feedUrl(show), copied)}>
                   {copied.value ? "Copied" : "Copy RSS"}
-                </button>
+                </Button>
               </div>
               <a class="feed-url" href={feedUrl(show)}>{(origin + feedUrl(show)).replace(/^https?:\/\//, "")}</a>
             </div>
