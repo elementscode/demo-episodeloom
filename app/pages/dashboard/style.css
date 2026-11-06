@@ -78,10 +78,6 @@
   font-size: var(--text-sm);
 }
 
-.episode-cell {
-  white-space: normal;
-}
-
 .episode-when {
   display: block;
   font-size: var(--text-xs);

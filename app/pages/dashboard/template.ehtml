@@ -190,7 +190,7 @@ function whenLabel(episode: Episode): string {
       <tbody>
         <tr e:for={episode of episodes}>
           <TableCell>{episode.number}</TableCell>
-          <TableCell class="episode-cell">
+          <TableCell wrap>
             <a e:if={isPublished(episode)} href={episodeUrl(show, episode)}>{episode.title}</a>
             <span e:else>{episode.title}</span>
             <span class="episode-when">{whenLabel(episode)}</span>
