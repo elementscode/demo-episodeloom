@@ -132,7 +132,7 @@ function onSubmit(state: EditorState, showId: string) {
               </Field>
 
               <Field label="Category" error={state.errors.category?.[0] ?? ""}>
-                <NativeSelect value={state.form.category} placeholder="Choose a category" block
+                <NativeSelect value={state.form.category} placeholder="Choose a category" required block
                               options={CATEGORIES.map((category) => ({ value: category, label: category.replace(" > ", " › ") }))}
                               attrs={{ id: "category" }} />
               </Field>
