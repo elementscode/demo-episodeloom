@@ -31,9 +31,14 @@
   padding: var(--space-2);
 }
 
-.form-actions {
-  justify-content: flex-end;
-  gap: var(--space-3);
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.episode-title-row {
+  grid-template-columns: minmax(0, 1fr) 9rem;
 }
 
 .notes-input {
@@ -59,33 +64,13 @@
   flex-wrap: wrap;
 }
 
-@media (max-width: 40rem) {
-  .cover-field {
-    grid-template-columns: 1fr;
-  }
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-5);
-}
-
-@media (max-width: 40rem) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.episode-title-row {
-  grid-template-columns: minmax(0, 1fr) 9rem;
-}
-
 .danger-zone p {
   margin: var(--space-1) 0 0;
 }
 
 @media (max-width: 40rem) {
+  .cover-field,
+  .form-grid,
   .episode-title-row {
     grid-template-columns: 1fr;
   }
