@@ -1,7 +1,8 @@
 import "./style.css";
 import { Button } from "@elements/ui/button";
 import { Icon } from "@elements/ui/icon";
-import { Slider, SliderChangeDetails } from "@elements/ui/slider";
+import { Slider } from "@elements/ui/slider";
+import type { SliderChangeDetails } from "@elements/ui/slider";
 import { formatDuration } from "#app/shared/services/podcasts";
 
 interface PlayerState {
