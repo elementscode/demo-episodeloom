@@ -26,7 +26,7 @@ interface EpisodeDraft {
   scheduleDate: string;
   scheduleTime: string;
   durationSeconds: number;
-  audio?: File;
+  audio: File[];
 }
 
 interface EditorState {
@@ -74,6 +74,7 @@ function initialState(episode: Episode | null, nextNumber: number): EditorState 
       scheduleDate: localDate(scheduleAt),
       scheduleTime: localTime(scheduleAt),
       durationSeconds: episode?.durationSeconds ?? 0,
+      audio: [],
     },
     errors: {},
     error: "",
@@ -85,9 +86,9 @@ function initialState(episode: Episode | null, nextNumber: number): EditorState 
 // The browser can read an audio file's length without uploading it, so the
 // feed's itunes:duration comes from the file the podcaster picked.
 function onAudioChange(event: Event, draft: EpisodeDraft) {
-  let file = (event.currentTarget as HTMLInputElement).files?.[0];
+  let picked = (event.target as HTMLInputElement).files?.[0];
 
-  if (!file) {
+  if (!picked) {
     return;
   }
 
@@ -97,7 +98,7 @@ function onAudioChange(event: Event, draft: EpisodeDraft) {
     draft.durationSeconds = Math.round(probe.duration || 0);
     URL.revokeObjectURL(probe.src);
   };
-  probe.src = URL.createObjectURL(file);
+  probe.src = URL.createObjectURL(picked);
 }
 
 function publishDate(draft: EpisodeDraft, episode: Episode | null): Date {
@@ -119,7 +120,7 @@ function onSubmit(state: EditorState, show: Show, episode: Episode | null) {
       notes: state.draft.notes,
       publishAt: publishDate(state.draft, episode),
       durationSeconds: state.draft.durationSeconds,
-      audio: state.draft.audio,
+      audio: state.draft.audio[0],
     });
     state.errors = {};
     redirect("/dashboard");
@@ -181,11 +182,10 @@ function onDelete(episode: Episode) {
             </div>
 
             <Field label="Audio" error={state.errors.audio?.[0] ?? ""}
-                   description={state.draft.audio ? `${state.draft.audio?.name} · ${formatDuration(state.draft.durationSeconds)}` : episode ? "Choose a file to replace the audio." : `MP3 or M4A, up to ${MAX_AUDIO_MB} MB.`}>
+                   description={state.draft.audio[0] ? `${state.draft.audio[0].name} · ${formatDuration(state.draft.durationSeconds)}` : episode ? "Choose a file to replace the audio." : `MP3 or M4A, up to ${MAX_AUDIO_MB} MB.`}>
               <Player e:if={episode} src={audioUrl(show, episode!)} duration={episode!.durationSeconds} compact={true} />
-              <input type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,.mp3,.m4a" value={state.draft.audio}
-                     class={[state.errors.audio && "is-error"]}
-                     onchange={(e) => onAudioChange(e, state.draft)}>
+              <Input type="file" files={state.draft.audio} onchange={(e) => onAudioChange(e, state.draft)}
+                     attrs={{ accept: "audio/mpeg,audio/mp4,audio/x-m4a,.mp3,.m4a" }} />
             </Field>
 
             <Field>

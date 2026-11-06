@@ -1,5 +1,5 @@
 import "./style.css";
-import { ValidationError, redirect } from "@elements/app";
+import { File, ValidationError, redirect } from "@elements/app";
 import { Alert } from "@elements/ui/alert";
 import { Button } from "@elements/ui/button";
 import { Checkbox } from "@elements/ui/checkbox";
@@ -15,6 +15,7 @@ import { MAX_COVER, MIN_COVER, ShowForm, saveShow } from "./services";
 
 interface EditorState {
   form: ShowForm;
+  cover: File[];
   errors: Record<string, string[]>;
   error: string;
   preview: string;
@@ -45,6 +46,7 @@ function initialState(show: Show | null, defaultAuthor: string): EditorState {
       applePodcastsUrl: show?.applePodcastsUrl ?? "",
       spotifyUrl: show?.spotifyUrl ?? "",
     },
+    cover: [],
     errors: {},
     error: "",
     preview: show ? coverUrl(show) : "",
@@ -53,10 +55,10 @@ function initialState(show: Show | null, defaultAuthor: string): EditorState {
 }
 
 function onCoverChange(event: Event, state: EditorState) {
-  let file = (event.currentTarget as HTMLInputElement).files?.[0];
+  let picked = (event.target as HTMLInputElement).files?.[0];
 
-  if (file) {
-    state.preview = URL.createObjectURL(file);
+  if (picked) {
+    state.preview = URL.createObjectURL(picked);
   }
 }
 
@@ -64,7 +66,7 @@ function onSubmit(state: EditorState, showId: string) {
   state.saving = true;
 
   try {
-    saveShow(showId, state.form);
+    saveShow(showId, { ...state.form, cover: state.cover[0] });
     state.errors = {};
     state.error = "";
     redirect("/dashboard");
@@ -109,9 +111,8 @@ function onSubmit(state: EditorState, showId: string) {
                 <img e:if={state.preview} class="cover-preview" src={state.preview} alt="" width="128" height="128">
                 <Empty e:else variant="outline" class="cover-empty" description="Square JPEG or PNG" />
                 <div class="stack is-xs">
-                  <input type="file" accept="image/jpeg,image/png" value={state.form.cover}
-                         class={[state.errors.cover && "is-error"]}
-                         onchange={(e) => onCoverChange(e, state)}>
+                  <Input type="file" files={state.cover} onchange={(e) => onCoverChange(e, state)}
+                         attrs={{ accept: "image/jpeg,image/png" }} />
                   <FieldDescription>{MIN_COVER} to {MAX_COVER} pixels square, as Apple Podcasts and Spotify require.</FieldDescription>
                 </div>
               </div>
