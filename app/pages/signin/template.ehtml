@@ -1,6 +1,10 @@
 import "./style.css";
 import { redirect } from "@elements/app";
 import favicon from "#app/shared/assets/favicons/favicon.svg";
+import { Alert } from "@elements/ui/alert";
+import { Button } from "@elements/ui/button";
+import { Field } from "@elements/ui/field";
+import { Input } from "@elements/ui/input";
 import { Layout } from "#app/shared/templates/layout";
 import { signin } from "#app/shared/services/auth";
 
@@ -58,21 +62,19 @@ function onUseDemo(form: SigninForm, login: DemoLogin) {
                 <p class="hint">Manage your shows, episodes and downloads.</p>
               </div>
 
-              <p e:if={form.error} class="error" role="alert">{form.error}</p>
+              <Alert e:if={form.error} variant="danger" description={form.error} />
 
-              <div class="field">
-                <label for="email">Email</label>
-                <input id="email" name="email" type="email" value={form.email}
-                       autocomplete="email" autocapitalize="none" spellcheck={false} required>
-              </div>
+              <Field label="Email">
+                <Input required type="email" name="email" value={form.email}
+                       attrs={{ id: "email", autocomplete: "email", autocapitalize: "none", spellcheck: "false" }} />
+              </Field>
 
-              <div class="field">
-                <label for="password">Password</label>
-                <input id="password" name="password" type="password" value={form.password}
-                       autocomplete="current-password" required>
-              </div>
+              <Field label="Password">
+                <Input required type="password" name="password" value={form.password}
+                       attrs={{ id: "password", autocomplete: "current-password" }} />
+              </Field>
 
-              <button type="submit" class="is-primary is-block">Sign in</button>
+              <Button type="submit" variant="primary" block>Sign in</Button>
 
               <p class="hint">New here? <a href="/signup">Create an account</a></p>
             </form>
