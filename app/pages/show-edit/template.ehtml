@@ -145,7 +145,7 @@ function onSubmit(state: EditorState, showId: string) {
 
               <FieldSet>
                 <FieldLegend variant="label">Content</FieldLegend>
-                <Field orientation="horizontal" label="Contains explicit content" reserveError={false}>
+                <Field orientation="horizontal" label="Contains explicit content">
                   <Checkbox checked={state.form.explicit} />
                 </Field>
               </FieldSet>
