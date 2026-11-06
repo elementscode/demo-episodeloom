@@ -1,5 +1,13 @@
 import "./style.css";
 import { ValidationError, redirect } from "@elements/app";
+import { Alert } from "@elements/ui/alert";
+import { Button } from "@elements/ui/button";
+import { Checkbox } from "@elements/ui/checkbox";
+import { Empty } from "@elements/ui/empty";
+import { Field, FieldDescription, FieldLegend, FieldSet } from "@elements/ui/field";
+import { Input } from "@elements/ui/input";
+import { NativeSelect } from "@elements/ui/native-select";
+import { Textarea } from "@elements/ui/textarea";
 import favicon from "#app/shared/assets/favicons/favicon.svg";
 import { Layout } from "#app/shared/templates/layout";
 import { CATEGORIES, Show, coverUrl, showUrl } from "#app/shared/services/podcasts";
@@ -89,96 +97,78 @@ function onSubmit(state: EditorState, showId: string) {
             <a href="/dashboard" class="text-sm">← Dashboard</a>
             <h1>{show ? "Edit show" : "New show"}</h1>
           </div>
-          <a e:if={show} class="button is-ghost is-sm" href={showUrl(show!)}>View public page</a>
+          <Button e:if={show} variant="ghost" size="sm" href={showUrl(show!)}>View public page</Button>
         </div>
 
         <form class="card" onsubmit={() => onSubmit(state, show?.id ?? "")}>
           <div class="card-body stack is-lg">
-            <p e:if={state.error} class="callout is-danger" role="alert">{state.error}</p>
+            <Alert e:if={state.error} variant="danger" description={state.error} />
 
-            <div class="field">
-              <label>Cover art</label>
+            <Field label="Cover art" error={state.errors.cover?.[0] ?? ""}>
               <div class="cover-field">
                 <img e:if={state.preview} class="cover-preview" src={state.preview} alt="" width="128" height="128">
-                <div e:else class="cover-empty">Square JPEG or PNG</div>
+                <Empty e:else variant="outline" class="cover-empty" description="Square JPEG or PNG" />
                 <div class="stack is-xs">
                   <input type="file" accept="image/jpeg,image/png" value={state.form.cover}
                          class={[state.errors.cover && "is-error"]}
                          onchange={(e) => onCoverChange(e, state)}>
-                  <p e:if={state.errors.cover} class="error">{state.errors.cover?.[0]}</p>
-                  <p e:else class="hint">{MIN_COVER} to {MAX_COVER} pixels square, as Apple Podcasts and Spotify require.</p>
+                  <FieldDescription>{MIN_COVER} to {MAX_COVER} pixels square, as Apple Podcasts and Spotify require.</FieldDescription>
                 </div>
               </div>
-            </div>
+            </Field>
 
-            <div class="field">
-              <label for="title">Title</label>
-              <input id="title" value={state.form.title} class={[state.errors.title && "is-error"]} required>
-              <p e:if={state.errors.title} class="error">{state.errors.title?.[0]}</p>
-            </div>
+            <Field label="Title" error={state.errors.title?.[0] ?? ""}>
+              <Input value={state.form.title} required attrs={{ id: "title" }} />
+            </Field>
 
-            <div class="field">
-              <label for="description">Description</label>
-              <textarea id="description" value={state.form.description} rows="4"
-                        class={[state.errors.description && "is-error"]} required/>
-              <p e:if={state.errors.description} class="error">{state.errors.description?.[0]}</p>
-              <p e:else class="hint">Shown in podcast apps and on your show page.</p>
-            </div>
+            <Field label="Description" description="Shown in podcast apps and on your show page." error={state.errors.description?.[0] ?? ""}>
+              <Textarea value={state.form.description} rows={4} required attrs={{ id: "description" }} />
+            </Field>
 
             <div class="form-grid">
-              <div class="field">
-                <label for="author">Author</label>
-                <input id="author" value={state.form.author} class={[state.errors.author && "is-error"]} required>
-                <p e:if={state.errors.author} class="error">{state.errors.author?.[0]}</p>
-              </div>
+              <Field label="Author" error={state.errors.author?.[0] ?? ""}>
+                <Input value={state.form.author} required attrs={{ id: "author" }} />
+              </Field>
 
-              <div class="field">
-                <label for="category">Category</label>
-                <select id="category" value={state.form.category} class={[state.errors.category && "is-error"]} required>
-                  <option value="">Choose a category</option>
-                  <option e:for={category of CATEGORIES} value={category}>{category.replace(" > ", " › ")}</option>
-                </select>
-                <p e:if={state.errors.category} class="error">{state.errors.category?.[0]}</p>
-              </div>
+              <Field label="Category" error={state.errors.category?.[0] ?? ""}>
+                <NativeSelect value={state.form.category} placeholder="Choose a category" block
+                              options={CATEGORIES.map((category) => ({ value: category, label: category.replace(" > ", " › ") }))}
+                              attrs={{ id: "category" }} />
+              </Field>
 
-              <div class="field">
-                <label for="language">Language</label>
-                <select id="language" value={state.form.language}>
-                  <option e:for={lang of LANGUAGES} value={lang.code}>{lang.name}</option>
-                </select>
-              </div>
+              <Field label="Language">
+                <NativeSelect value={state.form.language} block
+                              options={LANGUAGES.map((lang) => ({ value: lang.code, label: lang.name }))}
+                              attrs={{ id: "language" }} />
+              </Field>
 
-              <div class="field">
-                <label>Content</label>
-                <label><input type="checkbox" checked={state.form.explicit}> Contains explicit content</label>
-              </div>
+              <FieldSet>
+                <FieldLegend variant="label">Content</FieldLegend>
+                <Field orientation="horizontal" label="Contains explicit content" reserveError={false}>
+                  <Checkbox checked={state.form.explicit} />
+                </Field>
+              </FieldSet>
             </div>
 
-            <fieldset class="stack">
-              <legend>Directory links (optional)</legend>
-              <p class="hint">After you submit your RSS feed to Apple Podcasts or Spotify, paste the show's link here so listeners go straight to it.</p>
+            <FieldSet class="stack">
+              <FieldLegend>Directory links (optional)</FieldLegend>
+              <FieldDescription>After you submit your RSS feed to Apple Podcasts or Spotify, paste the show's link here so listeners go straight to it.</FieldDescription>
 
-              <div class="field">
-                <label for="apple">Apple Podcasts link</label>
-                <input id="apple" type="url" value={state.form.applePodcastsUrl} placeholder="https://podcasts.apple.com/…"
-                       class={[state.errors.applePodcastsUrl && "is-error"]}>
-                <p e:if={state.errors.applePodcastsUrl} class="error">{state.errors.applePodcastsUrl?.[0]}</p>
-              </div>
+              <Field label="Apple Podcasts link" error={state.errors.applePodcastsUrl?.[0] ?? ""}>
+                <Input type="url" value={state.form.applePodcastsUrl} placeholder="https://podcasts.apple.com/…" attrs={{ id: "apple" }} />
+              </Field>
 
-              <div class="field">
-                <label for="spotify">Spotify link</label>
-                <input id="spotify" type="url" value={state.form.spotifyUrl} placeholder="https://open.spotify.com/show/…"
-                       class={[state.errors.spotifyUrl && "is-error"]}>
-                <p e:if={state.errors.spotifyUrl} class="error">{state.errors.spotifyUrl?.[0]}</p>
-              </div>
-            </fieldset>
+              <Field label="Spotify link" error={state.errors.spotifyUrl?.[0] ?? ""}>
+                <Input type="url" value={state.form.spotifyUrl} placeholder="https://open.spotify.com/show/…" attrs={{ id: "spotify" }} />
+              </Field>
+            </FieldSet>
           </div>
 
           <div class="card-foot">
-            <a class="button is-ghost" href="/dashboard">Cancel</a>
-            <button type="submit" class={["is-primary", state.saving && "is-loading"]} disabled={state.saving}>
+            <Button variant="ghost" href="/dashboard">Cancel</Button>
+            <Button type="submit" variant="primary" loading={state.saving}>
               {show ? "Save changes" : "Create show"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

@@ -26,15 +26,8 @@
 }
 
 .cover-empty {
-  display: grid;
-  place-items: center;
   width: 8rem;
   height: 8rem;
-  border-radius: var(--radius-md);
-  border: 1px dashed var(--rule-strong, var(--rule));
-  color: var(--ink-soft);
-  font-size: var(--text-xs);
-  text-align: center;
   padding: var(--space-2);
 }
 
