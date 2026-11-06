@@ -1,14 +1,17 @@
 import "./style.css";
+import { Button } from "@elements/ui/button";
+import { Icon } from "@elements/ui/icon";
+import { Slider, SliderChangeDetails } from "@elements/ui/slider";
 import { formatDuration } from "#app/shared/services/podcasts";
 
 interface PlayerState {
   playing: boolean;
-  current: number;
+  position: number[];
 }
 
 // The audio element is the one piece of the page whose state lives in the
 // browser, so the controls reach it through the player they sit in.
-function audioFor(target: EventTarget | null): HTMLAudioElement | null {
+function audioFor(target: EventTarget | null | undefined): HTMLAudioElement | null {
   return (target as HTMLElement | null)?.closest(".player")?.querySelector("audio") ?? null;
 }
 
@@ -26,26 +29,23 @@ function onToggle(event: Event) {
   }
 }
 
-function onScrub(event: Event, state: PlayerState) {
-  let audio = audioFor(event.currentTarget);
-  let value = Number((event.currentTarget as HTMLInputElement).value);
-
-  state.current = value;
+function onScrub(value: number[], details: SliderChangeDetails) {
+  let audio = audioFor(details.event?.target);
 
   if (audio) {
-    audio.currentTime = value;
+    audio.currentTime = value[0];
   }
 }
 
 function onTime(event: Event, state: PlayerState) {
-  state.current = (event.currentTarget as HTMLAudioElement).currentTime;
+  state.position = [(event.currentTarget as HTMLAudioElement).currentTime];
 }
 
 <Player (
   src: string,
   duration: number,
   compact: boolean = false,
-  private state: PlayerState = { playing: false, current: 0 },
+  private state: PlayerState = { playing: false, position: [0] },
 )>
   <div class={["player", compact && "is-compact"]}>
     <audio preload="none"
@@ -55,27 +55,16 @@ function onTime(event: Event, state: PlayerState) {
            onended={() => state.playing = false}
            ontimeupdate={(e) => onTime(e, state)}></audio>
 
-    <button class="player-toggle is-primary"
-            aria-label={state.playing ? "Pause" : "Play"}
+    <Button variant="primary" icon round size={compact ? "sm" : "lg"}
+            label={state.playing ? "Pause" : "Play"}
             onclick={(e) => onToggle(e)}>
-      <svg e:if={state.playing} width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-        <rect x="3" y="2" width="3.5" height="12" rx="1" fill="currentColor"/>
-        <rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="currentColor"/>
-      </svg>
-      <svg e:else width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M4.5 2.5v11l9-5.5z" fill="currentColor"/>
-      </svg>
-    </button>
+      <Icon e:if={state.playing} name="pause" />
+      <Icon e:else name="play" />
+    </Button>
 
-    <input class="player-scrub"
-           type="range"
-           min="0"
-           max={duration}
-           step="0.1"
-           value={state.current}
-           aria-label="Position"
-           oninput={(e) => onScrub(e, state)}>
+    <Slider value={state.position} max={duration} step={0.1} label="Position"
+            onValueChange={(value, details) => onScrub(value, details)} />
 
-    <span class="player-time">{formatDuration(Math.floor(state.current))} / {formatDuration(duration)}</span>
+    <span class="player-time">{formatDuration(Math.floor(state.position[0]))} / {formatDuration(duration)}</span>
   </div>
 </Player>
