@@ -51,8 +51,8 @@ function onSubmit(state: SignupState) {
                      attrs={{ id: "email", autocomplete: "email", autocapitalize: "none", spellcheck: "false" }} />
             </Field>
 
-            <Field label="Password" description={`At least ${MIN_PASSWORD} characters.`} required>
-              <Input type="password" name="password" value={state.form.password}
+            <Field label="Password" description={`At least ${MIN_PASSWORD} characters.`}>
+              <Input required type="password" name="password" value={state.form.password}
                      attrs={{ id: "password", autocomplete: "new-password", minlength: MIN_PASSWORD }} />
             </Field>
 
